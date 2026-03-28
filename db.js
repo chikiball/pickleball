@@ -156,13 +156,17 @@ function deleteEvent(id) {
 }
 
 // Update event
-function updateEvent(id, { maxPlayers, courts }) {
-  db.prepare(`
-    UPDATE events 
-    SET max_players = COALESCE(?, max_players),
-        courts = COALESCE(?, courts)
-    WHERE id = ?
-  `).run(maxPlayers ?? null, courts ?? null, id);
+function updateEvent(id, data) {
+  const { maxPlayers, courts, time, location } = data;
+  const fields = [];
+  const vals = [];
+  if (maxPlayers !== undefined) { fields.push('max_players = ?'); vals.push(maxPlayers); }
+  if (courts !== undefined) { fields.push('courts = ?'); vals.push(courts); }
+  if (time !== undefined) { fields.push('time = ?'); vals.push(time); }
+  if (location !== undefined) { fields.push('location = ?'); vals.push(location); }
+  if (!fields.length) return getEvent(id);
+  vals.push(id);
+  db.prepare(`UPDATE events SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
   return getEvent(id);
 }
 
@@ -264,6 +268,16 @@ function updateMixerGame(gameId, { t1p1, t1p2, t2p1, t2p2, team1_score, team2_sc
   db.prepare(`UPDATE mixer_games SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
 }
 
+function updateParticipant(id, { name, status }) {
+  const fields = [];
+  const vals = [];
+  if (name !== undefined) { fields.push('name = ?'); vals.push(name); }
+  if (status !== undefined) { fields.push('status = ?'); vals.push(status); }
+  if (!fields.length) return;
+  vals.push(id);
+  db.prepare(`UPDATE participants SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+}
+
 // Initialize on load
 initDB();
 
@@ -277,6 +291,7 @@ module.exports = {
   getParticipants,
   addParticipant,
   removeParticipant,
+  updateParticipant,
   getStats,
   getMixersByEvent,
   getMixer,

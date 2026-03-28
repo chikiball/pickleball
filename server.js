@@ -11,6 +11,7 @@ const {
   getParticipants,
   addParticipant,
   removeParticipant,
+  updateParticipant,
   getStats,
   getMixersByEvent,
   getMixer,
@@ -54,10 +55,19 @@ function isPast(eventDate) {
 
 // Admin middleware
 function requireAdmin(req, res, next) {
-  if (!req.session || !req.session.isAdmin) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  if (req.session && req.session.isAdmin) return next();
+  // Fallback: accept base64-encoded password header (survives server restarts)
+  const token = req.headers['x-admin-token'];
+  if (token) {
+    try {
+      const pw = Buffer.from(token, 'base64').toString('utf8');
+      if (pw === ADMIN_PASSWORD) {
+        if (req.session) req.session.isAdmin = true;
+        return next();
+      }
+    } catch(e) {}
   }
-  next();
+  return res.status(401).json({ success: false, error: 'Unauthorised' });
 }
 
 // ============ API Routes ============
@@ -139,8 +149,8 @@ app.delete('/api/events/:id', requireAdmin, (req, res) => {
 // PATCH /api/events/:id - update max players and/or courts (public)
 app.patch('/api/events/:id', (req, res) => {
   try {
-    const { maxPlayers, courts } = req.body;
-    const event = updateEvent(req.params.id, { maxPlayers, courts });
+    const { maxPlayers, courts, time, location } = req.body;
+    const event = updateEvent(req.params.id, { maxPlayers, courts, time, location });
     if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
     res.json({ success: true, data: event });
   } catch (err) {
@@ -180,6 +190,17 @@ app.post('/api/events/:id/join', (req, res) => {
   } catch (error) {
     console.error('Error adding participant:', error);
     res.status(500).json({ success: false, error: 'Failed to add participant' });
+  }
+});
+
+// PATCH /api/participants/:id - Update participant name/status (admin only)
+app.patch('/api/participants/:id', requireAdmin, (req, res) => {
+  try {
+    const { name, status } = req.body;
+    updateParticipant(req.params.id, { name, status });
+    res.json({ success: true, data: null });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

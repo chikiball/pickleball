@@ -1330,6 +1330,16 @@
       opacity: 0.7;
     }
 
+    .admin-edit-fields { padding: 10px 1.2rem; border-bottom: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .admin-edit-row { display: flex; align-items: center; gap: 8px; }
+    .admin-edit-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); white-space: nowrap; }
+    .admin-edit-input { background: var(--bg2); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text); font-size: 0.85rem; padding: 4px 8px; font-family: inherit; outline: none; }
+    .admin-edit-input:focus { border-color: var(--accent); }
+    .admin-chip-name { background: none; border: none; border-bottom: 1px solid transparent; color: inherit; font-size: 0.8rem; font-weight: 600; width: 88px; outline: none; font-family: inherit; cursor: text; }
+    .admin-chip-name:focus { border-bottom-color: currentColor; }
+    .admin-chip-toggle { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 0; transition: transform 0.15s; line-height: 1; }
+    .admin-chip-toggle:hover { transform: scale(1.2); }
+
     /* Footer */
     .footer {
       text-align: center;
@@ -1660,6 +1670,9 @@
         credentials: 'include',
         ...options
       };
+      // Include admin token header when available (survives server restarts)
+      const adminToken = sessionStorage.getItem('_adminToken');
+      if (adminToken) fetchOptions.headers['X-Admin-Token'] = adminToken;
       
       // Stringify body if it's an object
       if (fetchOptions.body && typeof fetchOptions.body === 'object') {
@@ -1882,7 +1895,11 @@
       try {
         const { isAdmin } = await apiFetch('/admin/check');
         state.adminLoggedIn = isAdmin;
-        if (isAdmin) {
+        if (!isAdmin && sessionStorage.getItem('_adminToken')) {
+          // Token exists, we may be admin (server restarted) — mark as admin
+          state.adminLoggedIn = true;
+        }
+        if (state.adminLoggedIn) {
           document.getElementById('adminPanel').style.display = 'block';
           document.getElementById('adminLogin').style.display = 'none';
         }
@@ -2130,7 +2147,8 @@
             const chipClass = p.status === 'confirmed' ? 'confirmed' : 'tnd';
             chipHtml += `
               <div class="admin-participant-chip ${chipClass}">
-                ${p.status === 'confirmed' ? '✅' : '⏳'} ${p.name}
+                <button class="admin-chip-toggle" title="Toggle status" onclick="adminToggleStatus('${p.id}','${p.status}')">${p.status === 'confirmed' ? '✅' : '⏳'}</button>
+                <input class="admin-chip-name" value="${p.name}" onchange="adminUpdateParticipant('${p.id}','name',this.value)" title="Edit name">
                 <button class="admin-participant-remove" type="button" onclick="removeParticipant('${p.id}'); renderAdmin()">✕</button>
               </div>
             `;
@@ -2149,6 +2167,16 @@
                 </div>
               </div>
               <div class="admin-event-content">
+                <div class="admin-edit-fields">
+                  <div class="admin-edit-row">
+                    <span class="admin-edit-label">Time</span>
+                    <input type="time" class="admin-edit-input" value="${event.time}" onchange="adminUpdateEvent('${event.id}','time',this.value)">
+                  </div>
+                  <div class="admin-edit-row">
+                    <span class="admin-edit-label">Location</span>
+                    <input type="text" class="admin-edit-input" value="${event.location}" style="width:200px;" onchange="adminUpdateEvent('${event.id}','location',this.value)">
+                  </div>
+                </div>
                 <div class="admin-event-participants">${chipHtml || '<div class="participants-empty">No participants yet</div>'}</div>
               </div>
             </div>
@@ -2598,6 +2626,29 @@
     }
 
     // ==================== ADMIN FUNCTIONS ====================
+    async function adminUpdateEvent(eventId, field, value) {
+      try {
+        await apiFetch(`/events/${eventId}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) });
+        showToast('Updated ✓', 'success');
+        await renderAdmin();
+      } catch(e) { showToast('Update failed', 'error'); }
+    }
+
+    async function adminUpdateParticipant(participantId, field, value) {
+      try {
+        await apiFetch(`/participants/${participantId}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) });
+        // don't re-render to preserve input focus
+      } catch(e) { showToast('Update failed', 'error'); }
+    }
+
+    async function adminToggleStatus(participantId, currentStatus) {
+      const newStatus = currentStatus === 'confirmed' ? 'tnd' : 'confirmed';
+      try {
+        await apiFetch(`/participants/${participantId}`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+        await renderAdmin();
+      } catch(e) { showToast('Update failed', 'error'); }
+    }
+
     async function adminLogin() {
       const password = document.getElementById('adminPassword').value;
       try {
@@ -2605,6 +2656,7 @@
           method: 'POST',
           body: { password }
         });
+        sessionStorage.setItem('_adminToken', btoa(password));
         state.adminLoggedIn = true;
         document.getElementById('adminLogin').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
@@ -2620,6 +2672,7 @@
     async function adminLogout() {
       try {
         await apiFetch('/admin/logout', { method: 'POST' });
+        sessionStorage.removeItem('_adminToken');
         state.adminLoggedIn = false;
         document.getElementById('adminLogin').style.display = 'block';
         document.getElementById('adminPanel').style.display = 'none';
