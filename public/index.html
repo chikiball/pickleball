@@ -708,6 +708,55 @@
     }
     .location-link:hover { color: var(--accent); }
 
+    /* ===== MIXER PAGE ===== */
+    .mixer-page { max-width: 1100px; margin: 0 auto; }
+    .mixer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+    .mixer-title { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; }
+    .mixer-subtitle { color: var(--text-muted); font-size: 0.85rem; margin-top: 2px; }
+    .mixer-setup-card { background: var(--card); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 2rem; }
+    .mixer-players-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.8rem 0 1.2rem; }
+    .mixer-player-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg2); border: 1px solid var(--border-subtle); border-radius: 20px; }
+    .mixer-player-chip input { background: none; border: none; color: var(--text); font-size: 0.85rem; font-weight: 600; width: 90px; outline: none; font-family: inherit; }
+    .mixer-player-chip input:focus { border-bottom: 1px solid var(--accent); }
+    .mixer-controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .mixer-ctrl-group { display: flex; align-items: center; gap: 6px; }
+    .mixer-ctrl-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+    .mixer-adj-btn { background: var(--card2); border: 1px solid var(--border-subtle); color: var(--text); width: 26px; height: 26px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; font-weight: 700; transition: all 0.15s; }
+    .mixer-adj-btn:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .mixer-num-input { width: 48px; text-align: center; background: var(--bg2); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text); font-size: 1rem; font-weight: 700; padding: 3px; outline: none; -moz-appearance: textfield; }
+    .mixer-num-input::-webkit-outer-spin-button, .mixer-num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .mixer-num-input:focus { border-color: var(--accent); }
+    .mixer-format-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+    .mixer-fmt-btn { flex: 1; padding: 8px 0; border: 1px solid var(--border-subtle); background: var(--bg2); color: var(--text-muted); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: all 0.2s; }
+    .mixer-fmt-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .mixer-fmt-btn:hover:not(.active) { border-color: var(--border); color: var(--text); }
+    .mixer-round-block { margin-bottom: 2rem; }
+    .mixer-round-heading { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: flex; align-items: center; gap: 10px; margin-bottom: 0.8rem; }
+    .mixer-round-heading::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
+    .mixer-courts-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .mixer-game-card { background: var(--card); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 1rem; transition: border-color 0.2s; }
+    .mixer-game-card:hover { border-color: var(--border); }
+    .mixer-court-tag { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+    .mixer-team-col { display: flex; flex-direction: column; gap: 4px; }
+    .mixer-p-input { background: var(--bg2); border: 1px solid transparent; border-radius: 6px; color: var(--text); font-size: 0.82rem; font-weight: 600; padding: 4px 8px; width: 100%; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .mixer-p-input:focus { border-color: var(--accent); }
+    .mixer-vs-line { text-align: center; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text-muted); margin: 6px 0; }
+    .mixer-score-area { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+    .mixer-score { width: 46px; text-align: center; background: var(--bg2); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--accent); font-size: 1.1rem; font-weight: 900; padding: 4px; outline: none; font-family: inherit; -moz-appearance: textfield; }
+    .mixer-score::-webkit-outer-spin-button, .mixer-score::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .mixer-score:focus { border-color: var(--accent); }
+    .mixer-score.win { color: var(--confirmed); border-color: rgba(46,204,113,0.4); }
+    .mixer-score-colon { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); }
+    .mixer-lb-card { background: var(--card); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 1.5rem; margin-top: 2rem; }
+    .mixer-lb-heading { font-size: 1rem; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1rem; }
+    .mixer-lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.9rem; }
+    .mixer-lb-row:last-child { border-bottom: none; }
+    .mixer-lb-rank { width: 28px; text-align: center; font-size: 1rem; }
+    .mixer-lb-name { flex: 1; font-weight: 600; }
+    .mixer-lb-w { color: var(--confirmed); font-weight: 700; }
+    .mixer-lb-pts { color: var(--accent); font-weight: 700; }
+    @media (max-width: 600px) { .mixer-courts-row { grid-template-columns: 1fr; } .mixer-controls { gap: 0.8rem; } }
+
     /* Add to Calendar button */
     .date-cal-btn {
       background: none;
@@ -1371,6 +1420,7 @@
       <ul class="nav-links">
         <li><a href="#" class="nav-link active" data-view="home">Home</a></li>
         <li><a href="#" class="nav-link" data-view="events">Events</a></li>
+        <li><a href="#" class="nav-link" data-view="mixer">Mixer</a></li>
         <li><a href="#" class="nav-link" data-view="admin">Admin</a></li>
       </ul>
       <button class="btn-new-game" onclick="openCreateEventModal()">+ New Game</button>
@@ -1490,6 +1540,52 @@
     Made with 🏓 by Senggoldonk Pickle • Powered by good vibes and dinks
   </div>
 
+    <!-- Mixer Section -->
+    <div class="view" id="mixerView">
+      <div class="mixer-page">
+        <div class="mixer-header">
+          <div>
+            <h2 class="mixer-title">🏓 MIXER</h2>
+            <p class="mixer-subtitle">Round Robin Generator</p>
+          </div>
+          <button class="btn-danger btn-small" id="mixerResetBtn" style="display:none;" onclick="confirmResetMixer()">🗑 Reset</button>
+        </div>
+        <div class="mixer-setup-card">
+          <div class="form-group">
+            <label class="form-label">Select Event</label>
+            <select class="form-input" id="mixerEventSelect" onchange="onMixerEventChange(this.value)">
+              <option value="">-- choose an event --</option>
+            </select>
+          </div>
+          <div id="mixerSetupBody" style="display:none;">
+            <label class="form-label">Players <span id="mixerPlayerCount" style="color:var(--text-muted);font-weight:400;"></span></label>
+            <div class="mixer-players-grid" id="mixerPlayersGrid"></div>
+            <div class="mixer-format-row">
+              <button class="mixer-fmt-btn active" id="fmtDoubles" onclick="setMixerFormat('doubles')">👥 Doubles (2v2)</button>
+              <button class="mixer-fmt-btn" id="fmtSingles" onclick="setMixerFormat('singles')">👤 Singles (1v1)</button>
+            </div>
+            <div class="mixer-controls">
+              <div class="mixer-ctrl-group">
+                <span class="mixer-ctrl-label">ROUNDS</span>
+                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerRoundsInput',-1)">−</button>
+                <input type="number" class="mixer-num-input" id="mixerRoundsInput" value="4" min="1" max="20">
+                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerRoundsInput',1)">+</button>
+              </div>
+              <div class="mixer-ctrl-group">
+                <span class="mixer-ctrl-label">COURTS</span>
+                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerCourtsInput',-1)">−</button>
+                <input type="number" class="mixer-num-input" id="mixerCourtsInput" value="1" min="1" max="10">
+                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerCourtsInput',1)">+</button>
+              </div>
+              <button class="btn btn-primary" style="padding:0.5rem 1.2rem;" onclick="generateMixer()">🎲 GENERATE</button>
+            </div>
+          </div>
+        </div>
+        <div id="mixerScheduleContainer"></div>
+        <div id="mixerLeaderboardContainer"></div>
+      </div>
+    </div>
+
   <!-- Create Event Modal -->
   <div class="modal-overlay" id="createEventModal">
     <div class="modal">
@@ -1578,6 +1674,211 @@
       return data.data;
     }
 
+    // ==================== MIXER (API) ====================
+    const mxState = { eventId: null, mixerId: null, players: [], format: 'doubles' };
+
+    async function renderMixerView() {
+      try {
+        const events = await apiFetch('/events');
+        const upcomingForMixer = events.filter(e => !e.isPast);
+        const sel = document.getElementById('mixerEventSelect');
+        if (!sel) return;
+        const cur = sel.value || mxState.eventId || '';
+        sel.innerHTML = '<option value="">-- choose an event --</option>' +
+          upcomingForMixer.map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.title}</option>`).join('');
+        const body = document.getElementById('mixerSetupBody');
+        if (!mxState.eventId) { body.style.display='none'; document.getElementById('mixerScheduleContainer').innerHTML=''; document.getElementById('mixerLeaderboardContainer').innerHTML=''; document.getElementById('mixerResetBtn').style.display='none'; return; }
+        body.style.display = 'block';
+        const [eventData, mixersData] = await Promise.all([
+          apiFetch(`/events/${mxState.eventId}`),
+          apiFetch(`/events/${mxState.eventId}/mixers`)
+        ]);
+        const confirmed = (eventData.participants||[]).filter(p=>p.status==='confirmed').map(p=>p.name);
+        document.getElementById('mixerCourtsInput').value = eventData.courts || 1;
+        if (mixersData.length > 0) {
+          const mx = mixersData[0]; mxState.mixerId = mx.id; mxState.players = mx.players || confirmed;
+        } else { mxState.mixerId = null; mxState.players = confirmed; }
+        document.getElementById('mixerPlayerCount').textContent = `(${mxState.players.length})`;
+        document.getElementById('mixerResetBtn').style.display = mxState.mixerId ? 'block' : 'none';
+        renderMixerPlayers();
+        if (mxState.mixerId) await renderMixerSchedule();
+        else { document.getElementById('mixerScheduleContainer').innerHTML=''; document.getElementById('mixerLeaderboardContainer').innerHTML=''; }
+      } catch(e) { showToast('Failed to load mixer: '+e.message, 'error'); }
+    }
+
+    function renderMixerPlayers() {
+      const grid = document.getElementById('mixerPlayersGrid');
+      if (!grid) return;
+      grid.innerHTML = mxState.players.length ? mxState.players.map((name,i)=>`
+        <div class="mixer-player-chip"><span style="color:var(--text-muted)">👤</span>
+          <input value="${name}" onchange="mxRenamePlayer(${i},this.value)" title="Edit name">
+        </div>`).join('') : '<span style="color:var(--text-muted);font-size:0.85rem;">No confirmed players yet</span>';
+    }
+
+    async function mxRenamePlayer(i, val) {
+      if (!val.trim()) return;
+      mxState.players[i] = val.trim();
+    }
+
+    function onMixerEventChange(id) { mxState.eventId=id||null; mxState.mixerId=null; renderMixerView(); }
+
+    function adjMixerNum(inputId, delta) { const el=document.getElementById(inputId); el.value=Math.max(1,(parseInt(el.value)||1)+delta); }
+
+    function setMixerFormat(fmt) {
+      mxState.format = fmt;
+      document.getElementById('fmtDoubles').classList.toggle('active', fmt === 'doubles');
+      document.getElementById('fmtSingles').classList.toggle('active', fmt === 'singles');
+    }
+
+    async function generateMixer() {
+      const players = mxState.players.filter(Boolean);
+      const courts = parseInt(document.getElementById('mixerCourtsInput').value)||1;
+      const rounds = parseInt(document.getElementById('mixerRoundsInput').value)||4;
+      if (players.length < 4) { showToast('Need at least 4 confirmed players','error'); return; }
+      const games = buildRoundRobin(players, courts, rounds, mxState.format);
+      try {
+        if (mxState.mixerId) await apiFetch(`/api/mixers/${mxState.mixerId}`, { method: 'DELETE' });
+        const result = await apiFetch('/api/mixers', { method: 'POST', body: JSON.stringify({ eventId: mxState.eventId, players, games }) });
+        mxState.mixerId = result.id; mxState.players = players;
+        showToast('Mixer generated! 🎉','success');
+        document.getElementById('mixerResetBtn').style.display = 'block';
+        await renderMixerSchedule();
+      } catch(e) { showToast('Failed: '+e.message,'error'); }
+    }
+
+    function buildRoundRobin(players, courts, numRounds, format) {
+      return format === 'singles'
+        ? buildRRSingles(players, courts, numRounds)
+        : buildRRDoubles(players, courts, numRounds);
+    }
+
+    function buildRRSingles(players, courts, numRounds) {
+      const list = players.length % 2 !== 0 ? [...players, 'BYE'] : [...players];
+      const N = list.length, half = N / 2;
+      const fixed = list[0], rotating = list.slice(1);
+      const games = [], max = Math.min(numRounds, N - 1);
+      for (let r = 0; r < max; r++) {
+        const cur = [fixed, ...rotating];
+        for (let c = 0; c < courts && c < half; c++) {
+          const p1 = cur[c], p2 = cur[c + half];
+          if (p1 === 'BYE' || p2 === 'BYE') continue;
+          games.push({ round: r + 1, court: c + 1, t1p1: p1, t1p2: '', t2p1: p2, t2p2: '' });
+        }
+        rotating.unshift(rotating.pop());
+      }
+      return games;
+    }
+
+    function buildRRDoubles(players, courts, numRounds) {
+      const list = players.length % 2 !== 0 ? [...players, 'BYE'] : [...players];
+      const N = list.length, half = N / 2;
+      const fixed = list[0], rotating = list.slice(1);
+      const games = [], max = Math.min(numRounds, N - 1);
+      for (let r = 0; r < max; r++) {
+        const cur = [fixed, ...rotating];
+        for (let c = 0; c < courts; c++) {
+          const i = c * 2; if (i + 1 >= half) break;
+          const t1p1 = cur[i], t1p2 = cur[i + half], t2p1 = cur[i + 1], t2p2 = cur[i + 1 + half];
+          if (t1p1 === 'BYE' && t1p2 === 'BYE') continue;
+          games.push({ round: r + 1, court: c + 1,
+            t1p1: t1p1 === 'BYE' ? '' : t1p1, t1p2: t1p2 === 'BYE' ? '' : t1p2,
+            t2p1: t2p1 === 'BYE' ? '' : t2p1, t2p2: t2p2 === 'BYE' ? '' : t2p2 });
+        }
+        rotating.unshift(rotating.pop());
+      }
+      return games;
+    }
+
+    async function renderMixerSchedule() {
+      if (!mxState.mixerId) return;
+      try {
+        const data = await apiFetch(`/api/mixers/${mxState.mixerId}`);
+        const games = data.games || [];
+        if (!games.length) { document.getElementById('mixerScheduleContainer').innerHTML=''; return; }
+        const byRound = {};
+        games.forEach(g=>{ if(!byRound[g.round_number]) byRound[g.round_number]=[]; byRound[g.round_number].push(g); });
+        let html='';
+        Object.keys(byRound).sort((a,b)=>a-b).forEach(r=>{
+          html+=`<div class="mixer-round-block"><div class="mixer-round-heading">Round ${r}</div><div class="mixer-courts-row">${byRound[r].map(g=>mxGameCard(g)).join('')}</div></div>`;
+        });
+        document.getElementById('mixerScheduleContainer').innerHTML=html;
+        renderMixerLeaderboard(games);
+      } catch(e) { showToast('Failed to load schedule','error'); }
+    }
+
+    function mxGameCard(g) {
+      const isSingles = !g.t1p2 && !g.t2p2;
+      const s1 = g.team1_score, s2 = g.team2_score;
+      const w1 = s1 !== null && s2 !== null && s1 > s2;
+      const w2 = s1 !== null && s2 !== null && s2 > s1;
+      const team1Html = isSingles
+        ? `<input class="mixer-p-input" value="${g.t1p1||''}" placeholder="Player 1" onchange="mxSaveField('${g.id}','t1p1',this.value)">`
+        : `<input class="mixer-p-input" value="${g.t1p1||''}" placeholder="Player 1" onchange="mxSaveField('${g.id}','t1p1',this.value)">
+           <input class="mixer-p-input" value="${g.t1p2||''}" placeholder="Player 2" onchange="mxSaveField('${g.id}','t1p2',this.value)">`;
+      const team2Html = isSingles
+        ? `<input class="mixer-p-input" value="${g.t2p1||''}" placeholder="Player 2" onchange="mxSaveField('${g.id}','t2p1',this.value)">`
+        : `<input class="mixer-p-input" value="${g.t2p1||''}" placeholder="Player 3" onchange="mxSaveField('${g.id}','t2p1',this.value)">
+           <input class="mixer-p-input" value="${g.t2p2||''}" placeholder="Player 4" onchange="mxSaveField('${g.id}','t2p2',this.value)">`;
+      return `<div class="mixer-game-card">
+        <div class="mixer-court-tag">🏸 Court ${g.court_number}</div>
+        <div class="mixer-team-col">${team1Html}</div>
+        <div class="mixer-vs-line">— VS —</div>
+        <div class="mixer-team-col">${team2Html}</div>
+        <div class="mixer-score-area">
+          <input type="number" class="mixer-score${w1?' win':''}" value="${s1!==null?s1:''}" min="0" placeholder="—" onchange="mxSaveScore('${g.id}','team1_score',this.value)">
+          <span class="mixer-score-colon">:</span>
+          <input type="number" class="mixer-score${w2?' win':''}" value="${s2!==null?s2:''}" min="0" placeholder="—" onchange="mxSaveScore('${g.id}','team2_score',this.value)">
+        </div>
+      </div>`;
+    }
+
+    async function mxSaveField(gid, field, val) {
+      try { await apiFetch(`/api/mixer-games/${gid}`, { method: 'PATCH', body: JSON.stringify({ [field]: val }) }); }
+      catch(e) { showToast('Save failed','error'); }
+    }
+
+    async function mxSaveScore(gid, field, val) {
+      const v = val===''?null:parseInt(val);
+      try {
+        await apiFetch(`/api/mixer-games/${gid}`, { method: 'PATCH', body: JSON.stringify({ [field]: v }) });
+        await renderMixerSchedule();
+      } catch(e) { showToast('Save failed','error'); }
+    }
+
+    function renderMixerLeaderboard(games) {
+      const stats = {};
+      games.forEach(g=>{
+        [g.t1p1,g.t1p2,g.t2p1,g.t2p2].filter(Boolean).forEach(p=>{ if(!stats[p]) stats[p]={w:0,l:0,pf:0,pa:0}; });
+        const s1=g.team1_score, s2=g.team2_score;
+        if(s1===null||s2===null) return;
+        const t1=[g.t1p1,g.t1p2].filter(Boolean), t2=[g.t2p1,g.t2p2].filter(Boolean), t1w=s1>s2;
+        t1.forEach(p=>{ stats[p].pf+=s1; stats[p].pa+=s2; if(t1w) stats[p].w++; else stats[p].l++; });
+        t2.forEach(p=>{ stats[p].pf+=s2; stats[p].pa+=s1; if(!t1w) stats[p].w++; else stats[p].l++; });
+      });
+      const ranked=Object.entries(stats).map(([n,s])=>({name:n,...s,diff:s.pf-s.pa})).sort((a,b)=>b.w-a.w||b.diff-a.diff);
+      if(!ranked.length){document.getElementById('mixerLeaderboardContainer').innerHTML='';return;}
+      const medals=['🥇','🥈','🥉'];
+      document.getElementById('mixerLeaderboardContainer').innerHTML=`<div class="mixer-lb-card">
+        <div class="mixer-lb-heading">LEADERBOARD</div>
+        ${ranked.map((p,i)=>`<div class="mixer-lb-row">
+          <span class="mixer-lb-rank">${medals[i]||`${i+1}.`}</span>
+          <span class="mixer-lb-name">${p.name}</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="mixer-lb-w">${p.w}W</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">${p.l}L</span>
+            <span class="mixer-lb-pts">${p.diff>=0?'+':''}${p.diff}pts</span>
+          </div>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    async function confirmResetMixer() {
+      if(confirm('Delete this mixer and all scores?')){
+        try{await apiFetch(`/api/mixers/${mxState.mixerId}`,{method:'DELETE'});mxState.mixerId=null;document.getElementById('mixerResetBtn').style.display='none';document.getElementById('mixerScheduleContainer').innerHTML='';document.getElementById('mixerLeaderboardContainer').innerHTML='';showToast('Mixer reset','success');}
+        catch(e){showToast('Failed','error');}
+      }
+    }
+
     // ==================== INITIALIZATION ====================
     async function init() {
       try {
@@ -1645,6 +1946,8 @@
         await renderHome();
       } else if (state.currentView === 'events') {
         await renderEvents();
+      } else if (state.currentView === 'mixer') {
+        await renderMixerView();
       } else if (state.currentView === 'admin') {
         if (state.adminLoggedIn) {
           await renderAdmin();

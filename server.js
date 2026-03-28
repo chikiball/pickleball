@@ -11,7 +11,14 @@ const {
   getParticipants,
   addParticipant,
   removeParticipant,
-  getStats
+  getStats,
+  getMixersByEvent,
+  getMixer,
+  createMixer,
+  deleteMixer,
+  getMixerGames,
+  createMixerGame,
+  updateMixerGame
 } = require('./db');
 
 const app = express();
@@ -236,6 +243,67 @@ app.get('/api/stats', (req, res) => {
   } catch (error) {
     console.error('Error fetching stats:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch stats' });
+  }
+});
+
+// ==================== MIXER ROUTES ====================
+
+// GET /api/events/:eventId/mixers
+app.get('/api/events/:eventId/mixers', (req, res) => {
+  try {
+    const mixers = getMixersByEvent(req.params.eventId);
+    res.json({ success: true, data: mixers });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/mixers — create mixer + bulk insert games
+app.post('/api/mixers', (req, res) => {
+  try {
+    const { eventId, players, games } = req.body;
+    if (!eventId) return res.status(400).json({ success: false, error: 'eventId required' });
+    const mixer = createMixer(eventId, players || []);
+    if (games && games.length > 0) {
+      games.forEach(g => createMixerGame(mixer.id, g));
+    }
+    const result = { ...mixer, games: getMixerGames(mixer.id) };
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/mixers/:id — get mixer with all games
+app.get('/api/mixers/:id', (req, res) => {
+  try {
+    const mixer = getMixer(req.params.id);
+    if (!mixer) return res.status(404).json({ success: false, error: 'Mixer not found' });
+    const games = getMixerGames(req.params.id);
+    res.json({ success: true, data: { ...mixer, games } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/mixer-games/:id — update game (scores + player names)
+app.patch('/api/mixer-games/:id', (req, res) => {
+  try {
+    const { t1p1, t1p2, t2p1, t2p2, team1_score, team2_score } = req.body;
+    updateMixerGame(req.params.id, { t1p1, t1p2, t2p1, t2p2, team1_score, team2_score });
+    res.json({ success: true, data: null });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/mixers/:id
+app.delete('/api/mixers/:id', (req, res) => {
+  try {
+    deleteMixer(req.params.id);
+    res.json({ success: true, data: null });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

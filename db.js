@@ -41,6 +41,29 @@ function initDB() {
       FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS mixers (
+      id TEXT PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      players TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS mixer_games (
+      id TEXT PRIMARY KEY,
+      mixer_id TEXT NOT NULL,
+      round_number INTEGER NOT NULL,
+      court_number INTEGER NOT NULL,
+      t1p1 TEXT DEFAULT '',
+      t1p2 TEXT DEFAULT '',
+      t2p1 TEXT DEFAULT '',
+      t2p2 TEXT DEFAULT '',
+      team1_score INTEGER DEFAULT NULL,
+      team2_score INTEGER DEFAULT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (mixer_id) REFERENCES mixers(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_participants_event ON participants(event_id);
     CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
   `);
@@ -49,6 +72,10 @@ function initDB() {
   try {
     db.exec('ALTER TABLE events ADD COLUMN courts INTEGER DEFAULT 1');
   } catch (e) { /* already exists */ }
+
+  // Mixer tables
+  try { db.exec(`CREATE TABLE IF NOT EXISTS mixers (id TEXT PRIMARY KEY, event_id TEXT NOT NULL, players TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL)`); } catch(e) {}
+  try { db.exec(`CREATE TABLE IF NOT EXISTS mixer_games (id TEXT PRIMARY KEY, mixer_id TEXT NOT NULL, round_number INTEGER NOT NULL, court_number INTEGER NOT NULL, t1p1 TEXT DEFAULT '', t1p2 TEXT DEFAULT '', t2p1 TEXT DEFAULT '', t2p2 TEXT DEFAULT '', team1_score INTEGER DEFAULT NULL, team2_score INTEGER DEFAULT NULL, created_at TEXT NOT NULL)`); } catch(e) {}
 }
 
 // Helper to generate ID
@@ -185,6 +212,58 @@ function getStats() {
   };
 }
 
+// ==================== MIXER FUNCTIONS ====================
+function getMixersByEvent(eventId) {
+  const mixers = db.prepare('SELECT * FROM mixers WHERE event_id = ? ORDER BY created_at DESC').all(eventId);
+  return mixers.map(m => ({ ...m, players: JSON.parse(m.players || '[]') }));
+}
+
+function getMixer(mixerId) {
+  const mixer = db.prepare('SELECT * FROM mixers WHERE id = ?').get(mixerId);
+  if (!mixer) return null;
+  return { ...mixer, players: JSON.parse(mixer.players || '[]') };
+}
+
+function createMixer(eventId, players) {
+  const id = generateId();
+  const createdAt = new Date().toISOString();
+  db.prepare('INSERT INTO mixers (id, event_id, players, created_at) VALUES (?, ?, ?, ?)')
+    .run(id, eventId, JSON.stringify(players || []), createdAt);
+  return getMixer(id);
+}
+
+function deleteMixer(mixerId) {
+  db.prepare('DELETE FROM mixer_games WHERE mixer_id = ?').run(mixerId);
+  db.prepare('DELETE FROM mixers WHERE id = ?').run(mixerId);
+}
+
+function getMixerGames(mixerId) {
+  return db.prepare('SELECT * FROM mixer_games WHERE mixer_id = ? ORDER BY round_number, court_number').all(mixerId);
+}
+
+function createMixerGame(mixerId, { round, court, t1p1, t1p2, t2p1, t2p2 }) {
+  const id = generateId();
+  const createdAt = new Date().toISOString();
+  db.prepare(`INSERT INTO mixer_games (id, mixer_id, round_number, court_number, t1p1, t1p2, t2p1, t2p2, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(id, mixerId, round, court, t1p1 || '', t1p2 || '', t2p1 || '', t2p2 || '', createdAt);
+  return id;
+}
+
+function updateMixerGame(gameId, { t1p1, t1p2, t2p1, t2p2, team1_score, team2_score }) {
+  const fields = [];
+  const vals = [];
+  if (t1p1 !== undefined) { fields.push('t1p1 = ?'); vals.push(t1p1); }
+  if (t1p2 !== undefined) { fields.push('t1p2 = ?'); vals.push(t1p2); }
+  if (t2p1 !== undefined) { fields.push('t2p1 = ?'); vals.push(t2p1); }
+  if (t2p2 !== undefined) { fields.push('t2p2 = ?'); vals.push(t2p2); }
+  if (team1_score !== undefined) { fields.push('team1_score = ?'); vals.push(team1_score); }
+  if (team2_score !== undefined) { fields.push('team2_score = ?'); vals.push(team2_score); }
+  if (fields.length === 0) return;
+  vals.push(gameId);
+  db.prepare(`UPDATE mixer_games SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+}
+
 // Initialize on load
 initDB();
 
@@ -198,5 +277,12 @@ module.exports = {
   getParticipants,
   addParticipant,
   removeParticipant,
-  getStats
+  getStats,
+  getMixersByEvent,
+  getMixer,
+  createMixer,
+  deleteMixer,
+  getMixerGames,
+  createMixerGame,
+  updateMixerGame
 };
