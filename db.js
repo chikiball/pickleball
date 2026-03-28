@@ -28,6 +28,7 @@ function initDB() {
       location TEXT NOT NULL,
       max_players INTEGER NOT NULL DEFAULT 12,
       description TEXT DEFAULT '',
+      courts INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL
     );
 
@@ -43,6 +44,11 @@ function initDB() {
     CREATE INDEX IF NOT EXISTS idx_participants_event ON participants(event_id);
     CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
   `);
+  
+  // Migrate: add courts column if not exists
+  try {
+    db.exec('ALTER TABLE events ADD COLUMN courts INTEGER DEFAULT 1');
+  } catch (e) { /* already exists */ }
 }
 
 // Helper to generate ID
@@ -106,11 +112,11 @@ function createEvent(data) {
   const createdAt = new Date().toISOString();
   
   const stmt = db.prepare(`
-    INSERT INTO events (id, title, date, time, location, max_players, description, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (id, title, date, time, location, max_players, description, courts, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   
-  stmt.run(id, data.title, data.date, data.time, data.location, data.maxPlayers || 12, data.description || '', createdAt);
+  stmt.run(id, data.title, data.date, data.time, data.location, data.maxPlayers || 12, data.description || '', data.courts || 1, createdAt);
   
   return getEvent(id);
 }
@@ -120,6 +126,17 @@ function deleteEvent(id) {
   const stmt = db.prepare('DELETE FROM events WHERE id = ?');
   const result = stmt.run(id);
   return result.changes > 0;
+}
+
+// Update event
+function updateEvent(id, { maxPlayers, courts }) {
+  db.prepare(`
+    UPDATE events 
+    SET max_players = COALESCE(?, max_players),
+        courts = COALESCE(?, courts)
+    WHERE id = ?
+  `).run(maxPlayers ?? null, courts ?? null, id);
+  return getEvent(id);
 }
 
 // Get participants for an event
@@ -177,6 +194,7 @@ module.exports = {
   getEvent,
   createEvent,
   deleteEvent,
+  updateEvent,
   getParticipants,
   addParticipant,
   removeParticipant,

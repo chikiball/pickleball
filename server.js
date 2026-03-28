@@ -7,6 +7,7 @@ const {
   getEvent,
   createEvent,
   deleteEvent,
+  updateEvent,
   getParticipants,
   addParticipant,
   removeParticipant,
@@ -72,7 +73,7 @@ app.get('/api/events', (req, res) => {
 // POST /api/events - Create event
 app.post('/api/events', (req, res) => {
   try {
-    const { title, date, time, location, maxPlayers, description } = req.body;
+    const { title, date, time, location, maxPlayers, description, courts } = req.body;
     
     // Validate required fields
     if (!title || !date || !time || !location) {
@@ -85,7 +86,8 @@ app.post('/api/events', (req, res) => {
       time,
       location,
       maxPlayers: maxPlayers || 12,
-      description: description || ''
+      description: description || '',
+      courts: courts
     });
     
     res.status(201).json({ success: true, data: event });
@@ -127,6 +129,18 @@ app.delete('/api/events/:id', requireAdmin, (req, res) => {
   }
 });
 
+// PATCH /api/events/:id - update max players and/or courts (public)
+app.patch('/api/events/:id', (req, res) => {
+  try {
+    const { maxPlayers, courts } = req.body;
+    const event = updateEvent(req.params.id, { maxPlayers, courts });
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
+    res.json({ success: true, data: event });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST /api/events/:id/join - Add participant
 app.post('/api/events/:id/join', (req, res) => {
   try {
@@ -162,8 +176,8 @@ app.post('/api/events/:id/join', (req, res) => {
   }
 });
 
-// DELETE /api/participants/:id - Remove participant (admin only)
-app.delete('/api/participants/:id', requireAdmin, (req, res) => {
+// DELETE /api/participants/:id - Remove participant
+app.delete('/api/participants/:id', (req, res) => {
   try {
     const success = removeParticipant(req.params.id);
     
