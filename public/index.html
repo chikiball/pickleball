@@ -1737,8 +1737,8 @@
       if (players.length < 4) { showToast('Need at least 4 confirmed players','error'); return; }
       const games = buildRoundRobin(players, courts, rounds, mxState.format);
       try {
-        if (mxState.mixerId) await apiFetch(`/api/mixers/${mxState.mixerId}`, { method: 'DELETE' });
-        const result = await apiFetch('/api/mixers', { method: 'POST', body: JSON.stringify({ eventId: mxState.eventId, players, games }) });
+        if (mxState.mixerId) await apiFetch(`/mixers/${mxState.mixerId}`, { method: 'DELETE' });
+        const result = await apiFetch('/mixers', { method: 'POST', body: JSON.stringify({ eventId: mxState.eventId, players, games }) });
         mxState.mixerId = result.id; mxState.players = players;
         showToast('Mixer generated! 🎉','success');
         document.getElementById('mixerResetBtn').style.display = 'block';
@@ -1792,7 +1792,7 @@
     async function renderMixerSchedule() {
       if (!mxState.mixerId) return;
       try {
-        const data = await apiFetch(`/api/mixers/${mxState.mixerId}`);
+        const data = await apiFetch(`/mixers/${mxState.mixerId}`);
         const games = data.games || [];
         if (!games.length) { document.getElementById('mixerScheduleContainer').innerHTML=''; return; }
         const byRound = {};
@@ -1833,14 +1833,14 @@
     }
 
     async function mxSaveField(gid, field, val) {
-      try { await apiFetch(`/api/mixer-games/${gid}`, { method: 'PATCH', body: JSON.stringify({ [field]: val }) }); }
+      try { await apiFetch(`/mixer-games/${gid}`, { method: 'PATCH', body: JSON.stringify({ [field]: val }) }); }
       catch(e) { showToast('Save failed','error'); }
     }
 
     async function mxSaveScore(gid, field, val) {
       const v = val===''?null:parseInt(val);
       try {
-        await apiFetch(`/api/mixer-games/${gid}`, { method: 'PATCH', body: JSON.stringify({ [field]: v }) });
+        await apiFetch(`/mixer-games/${gid}`, { method: 'PATCH', body: JSON.stringify({ [field]: v }) });
         await renderMixerSchedule();
       } catch(e) { showToast('Save failed','error'); }
     }
@@ -1874,7 +1874,7 @@
 
     async function confirmResetMixer() {
       if(confirm('Delete this mixer and all scores?')){
-        try{await apiFetch(`/api/mixers/${mxState.mixerId}`,{method:'DELETE'});mxState.mixerId=null;document.getElementById('mixerResetBtn').style.display='none';document.getElementById('mixerScheduleContainer').innerHTML='';document.getElementById('mixerLeaderboardContainer').innerHTML='';showToast('Mixer reset','success');}
+        try{await apiFetch(`/mixers/${mxState.mixerId}`,{method:'DELETE'});mxState.mixerId=null;document.getElementById('mixerResetBtn').style.display='none';document.getElementById('mixerScheduleContainer').innerHTML='';document.getElementById('mixerLeaderboardContainer').innerHTML='';showToast('Mixer reset','success');}
         catch(e){showToast('Failed','error');}
       }
     }
