@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🥒 Pickleball Booking</title>
+  <title>Senggoldonk Pickle – Book Your Game</title>
   <style>
     * {
       margin: 0;
@@ -761,20 +761,27 @@
   <header>
     <div class="header-content">
       <a href="#" class="logo" id="logoLink">
-        <svg class="logo-svg" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="46" fill="#C8F031"/>
-          <path d="M 20 50 Q 50 30 80 50 Q 50 70 20 50" fill="none" stroke="#0B1426" stroke-width="2.5" opacity="0.4"/>
-          <circle cx="35" cy="38" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="50" cy="32" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="65" cy="38" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="30" cy="52" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="70" cy="52" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="35" cy="65" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="50" cy="70" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="65" cy="65" r="4.5" fill="#0B1426" opacity="0.55"/>
-          <circle cx="50" cy="50" r="4.5" fill="#0B1426" opacity="0.55"/>
+        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="piBall" cx="38%" cy="32%" r="62%">
+              <stop offset="0%" stop-color="#FFFDE7"/>
+              <stop offset="28%" stop-color="#FFE600"/>
+              <stop offset="100%" stop-color="#C49A00"/>
+            </radialGradient>
+          </defs>
+          <circle cx="50" cy="50" r="47" fill="url(#piBall)"/>
+          <circle cx="50" cy="50" r="47" fill="none" stroke="rgba(90,70,0,0.3)" stroke-width="1.5"/>
+          <!-- Center hole -->
+          <circle cx="50" cy="50" r="4" fill="#5A4000" opacity="0.75"/>
+          <!-- 6 outer holes at r=34 from center, 60° apart, oval following ball curve -->
+          <ellipse cx="84" cy="50" rx="3" ry="4.5" fill="#5A4000" opacity="0.75"/>
+          <ellipse cx="67" cy="79" rx="3" ry="4.5" transform="rotate(60, 67, 79)" fill="#5A4000" opacity="0.75"/>
+          <ellipse cx="33" cy="79" rx="3" ry="4.5" transform="rotate(120, 33, 79)" fill="#5A4000" opacity="0.75"/>
+          <ellipse cx="16" cy="50" rx="3" ry="4.5" fill="#5A4000" opacity="0.75"/>
+          <ellipse cx="33" cy="21" rx="3" ry="4.5" transform="rotate(240, 33, 21)" fill="#5A4000" opacity="0.75"/>
+          <ellipse cx="67" cy="21" rx="3" ry="4.5" transform="rotate(300, 67, 21)" fill="#5A4000" opacity="0.75"/>
         </svg>
-        <span>Pickleball</span>
+        <span>Senggoldonk Pickle</span>
       </a>
       <nav>
         <button id="navHome" class="active">Home</button>
@@ -789,8 +796,8 @@
     <!-- Home Section -->
     <section id="homeSection" class="section active">
       <div class="hero">
-        <h1>🥒 Pickleball Booking</h1>
-        <p>Find and join pickleball games near you</p>
+        <h1>🏓 Senggoldonk Pickle</h1>
+        <p>Find and join pickleball games in Singapore</p>
         <div class="hero-buttons">
           <button class="btn btn-primary" id="browseEventsBtn">Browse Events</button>
           <button class="btn btn-secondary" id="createEventBtn">Create Event</button>
