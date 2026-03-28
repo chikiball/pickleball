@@ -2224,11 +2224,27 @@
     }
 
     function openInMap(location, lat, lng) {
+      const ua = navigator.userAgent;
+      const isApple = /iPhone|iPad|iPod|Macintosh/.test(ua);
+      const isAndroid = /Android/.test(ua);
+      const hasCoords = lat && lng && String(lat) !== 'null' && String(lng) !== 'null';
+      const q = encodeURIComponent((location || '') + (hasCoords ? '' : ' Singapore'));
       let url;
-      if (lat && lng && lat !== 'null' && lng !== 'null') {
-        url = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+      if (isApple) {
+        // iOS → Apple Maps app, macOS → Maps.app
+        url = hasCoords
+          ? `https://maps.apple.com/?ll=${lat},${lng}&q=${q}`
+          : `https://maps.apple.com/?q=${q}`;
+      } else if (isAndroid) {
+        // Android geo: URI → opens default maps app (Google Maps etc.)
+        url = hasCoords
+          ? `geo:${lat},${lng}?q=${lat},${lng}(${q})`
+          : `geo:0,0?q=${q}`;
       } else {
-        url = `https://www.openstreetmap.org/search?query=${encodeURIComponent(location + ' Singapore')}`;
+        // Desktop (Windows/Linux) → Google Maps web
+        url = hasCoords
+          ? `https://www.google.com/maps?q=${lat},${lng}`
+          : `https://www.google.com/maps/search/?q=${q}`;
       }
       window.open(url, '_blank');
     }
