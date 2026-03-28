@@ -1512,17 +1512,17 @@
           container.innerHTML = '<div class="empty-state">No upcoming games. Create one! 🏓</div>';
         } else {
           const nextEvent = upcomingEvents[0];
-          const participantCount = nextEvent.participants ? nextEvent.participants.length : 0;
-          const isFull = participantCount >= nextEvent.max_players;
-          const capacityPercent = (participantCount / nextEvent.max_players) * 100;
+          const confirmedCount = nextEvent.confirmed_count || 0;
+          const isFull = confirmedCount >= nextEvent.max_players;
+          const capacityPercent = (confirmedCount / nextEvent.max_players) * 100;
           
           let capacityClass = '';
           if (capacityPercent >= 100) capacityClass = 'full';
           else if (capacityPercent >= 75) capacityClass = 'warning';
 
           let badgesHtml = '';
-          if (participantCount > 0) {
-            badgesHtml += `<div class="badge confirmed">✅ ${participantCount} Participants</div>`;
+          if (confirmedCount > 0) {
+            badgesHtml += `<div class="badge confirmed">✅ ${confirmedCount} Confirmed</div>`;
           }
 
           const joinBtnHtml = isFull
@@ -1541,7 +1541,7 @@
               <div class="capacity-bar">
                 <div class="capacity-fill ${capacityClass}" style="width: ${Math.min(capacityPercent, 100)}%"></div>
               </div>
-              <div class="capacity-text">${participantCount} / ${nextEvent.max_players} Players</div>
+              <div class="capacity-text">${confirmedCount} / ${nextEvent.max_players} Players</div>
             </div>
             <div class="badges-row">${badgesHtml}</div>
             ${joinBtnHtml}
@@ -1551,8 +1551,7 @@
         // Update stats
         const totalLocations = new Set(events.map(e => e.location)).size;
         const totalParticipants = events.reduce((sum, e) => {
-          const pCount = e.participants ? e.participants.length : 0;
-          return sum + pCount;
+          return sum + (e.confirmed_count || 0);
         }, 0);
         
         document.getElementById('totalGamesStat').textContent = events.length;
@@ -1580,13 +1579,13 @@
           upcomingHtml = '<div class="empty-state">No upcoming games.</div>';
         } else {
           upcomingHtml = upcomingEvents.map(event => {
-            const participantCount = event.participants ? event.participants.length : 0;
+            const confirmedCount = event.confirmed_count || 0;
             return `
             <div class="event-card" onclick="openEventDetail('${event.id}')">
               <h3 class="event-card-title">${event.title}</h3>
               <div class="event-card-meta">${formatDisplayDate(event.date, event.time)}</div>
               <div class="event-card-location">📍 ${event.location}</div>
-              <div class="event-card-players">${participantCount} / ${event.max_players} Players</div>
+              <div class="event-card-players">${confirmedCount} / ${event.max_players} Players</div>
               <button class="btn-view-details" onclick="event.stopPropagation(); openEventDetail('${event.id}')">VIEW DETAILS</button>
             </div>
           `;
@@ -1644,8 +1643,7 @@
         const upcomingCount = events.filter(e => !e.isPast).length;
         const pastCount = events.filter(e => e.isPast).length;
         const totalParticipants = events.reduce((sum, e) => {
-          const pCount = e.participants ? e.participants.length : 0;
-          return sum + pCount;
+          return sum + (e.confirmed_count || 0);
         }, 0);
 
         document.getElementById('adminTotalEvents').textContent = events.length;

@@ -66,7 +66,8 @@ function getAllEvents() {
   const stmt = db.prepare(`
     SELECT 
       e.*,
-      COUNT(p.id) as participant_count
+      COUNT(p.id) as participant_count,
+      SUM(CASE WHEN p.status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_count
     FROM events e
     LEFT JOIN participants p ON e.id = p.event_id
     GROUP BY e.id
@@ -77,7 +78,8 @@ function getAllEvents() {
   return events.map(e => ({
     ...e,
     isPast: isPast(e.date),
-    participantCount: e.participant_count
+    participant_count: e.participant_count || 0,
+    confirmed_count: e.confirmed_count || 0
   }));
 }
 
