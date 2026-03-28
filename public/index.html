@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <title>Senggoldonk Pickle – Book Your Game</title>
   <style>
     * {
@@ -663,6 +665,48 @@
     .chip-remove:hover {
       opacity: 1;
     }
+
+    /* Editable setting inputs */
+    .setting-input {
+      width: 52px;
+      text-align: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--accent);
+      font-size: 1.2rem;
+      font-weight: 900;
+      padding: 2px 4px;
+      -moz-appearance: textfield;
+    }
+    .setting-input::-webkit-outer-spin-button,
+    .setting-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .setting-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Map container */
+    .map-container {
+      height: 220px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 8px;
+      border: 1px solid var(--border-subtle);
+    }
+    .map-hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Clickable location */
+    .location-link {
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .location-link:hover { color: var(--accent); }
 
     /* MODALS */
     .modal-overlay {
@@ -1438,7 +1482,11 @@
         </div>
         <div class="form-group">
           <label class="form-label">Location *</label>
-          <input type="text" class="form-input" id="eventLocation" placeholder="e.g. Court A – Kallang" required />
+          <input type="text" class="form-input" id="eventLocation" placeholder="e.g. Court A – Kallang" required oninput="onLocationInput(this.value)" />
+          <div class="map-container" id="createMapContainer" style="display:none;">
+            <div id="createMapEl" style="width:100%;height:100%;"></div>
+          </div>
+          <p class="map-hint">📍 Type to search, or click the map to pin a spot</p>
         </div>
         <div class="form-group">
           <label class="form-label">Max Players</label>
@@ -1610,7 +1658,7 @@
               📅 ${formatDisplayDate(nextEvent.date, nextEvent.time)}
             </div>
             <div class="next-game-location">
-              📍 ${nextEvent.location}
+              <span class="location-link" onclick="openInMap('${nextEvent.location}', ${nextEvent.lat}, ${nextEvent.lng})">📍 ${nextEvent.location}</span>
             </div>
             <div class="next-game-location">
               🏸 ${nextEvent.courts || 1} Court${(nextEvent.courts || 1) > 1 ? 's' : ''}
@@ -1662,7 +1710,7 @@
             <div class="event-card" onclick="openEventDetail('${event.id}')">
               <h3 class="event-card-title">${event.title}</h3>
               <div class="event-card-meta">${formatDisplayDate(event.date, event.time)}</div>
-              <div class="event-card-location">📍 ${event.location}</div>
+              <div class="event-card-location"><span class="location-link" onclick="openInMap('${event.location}', ${event.lat}, ${event.lng})">📍 ${event.location}</span></div>
               <div class="event-card-location">🏸 ${event.courts || 1} Court${(event.courts || 1) > 1 ? 's' : ''}</div>
               <div class="event-card-players">${confirmedCount} / ${event.max_players} Players</div>
               <button class="btn-view-details" onclick="event.stopPropagation(); openEventDetail('${event.id}')">VIEW DETAILS</button>
@@ -1789,6 +1837,13 @@
       document.getElementById('eventMaxPlayers').value = '12';
       document.getElementById('eventCourts').value = '1';
       document.getElementById('eventDescription').value = '';
+      const locEl = document.getElementById('eventLocation');
+      if (locEl) { locEl._lat = null; locEl._lng = null; }
+      if (_createMap) {
+        if (_createMarker) { _createMap.removeLayer(_createMarker); _createMarker = null; }
+        _createMap.setView([1.3521, 103.8198], 12);
+      }
+      initCreateMap();
       openModal('createEventModal');
     }
 
@@ -1801,6 +1856,8 @@
       const maxPlayers = parseInt(document.getElementById('eventMaxPlayers').value) || 12;
       const courts = parseInt(document.getElementById('eventCourts').value) || 1;
       const description = document.getElementById('eventDescription').value.trim();
+      const lat = document.getElementById('eventLocation')._lat || null;
+      const lng = document.getElementById('eventLocation')._lng || null;
 
       if (!title || !date || !time || !location) {
         showToast('Please fill in all required fields', 'error');
@@ -1810,7 +1867,7 @@
       try {
         await apiFetch('/events', {
           method: 'POST',
-          body: { title, date, time, location, maxPlayers, courts, description }
+          body: { title, date, time, location, maxPlayers, courts, description, lat, lng }
         });
         closeModal('createEventModal');
         showToast('Game created successfully! 🎉', 'success');
@@ -1923,17 +1980,17 @@
             <div class="event-setting">
               <label class="setting-label">MAX PLAYERS</label>
               <div class="setting-control">
-                <button onclick="updateEventSetting('${event.id}', 'maxPlayers', ${event.max_players} - 1)">−</button>
-                <span id="maxPlayersDisplay">${event.max_players}</span>
-                <button onclick="updateEventSetting('${event.id}', 'maxPlayers', ${event.max_players} + 1)">+</button>
+                <button onclick="adjustSetting('${event.id}', 'maxPlayers', -1)">−</button>
+                <input type="number" class="setting-input" id="maxPlayersInput" value="${event.max_players}" min="1" onchange="saveSetting('${event.id}', 'maxPlayers', this.value)">
+                <button onclick="adjustSetting('${event.id}', 'maxPlayers', 1)">+</button>
               </div>
             </div>
             <div class="event-setting">
               <label class="setting-label">COURTS</label>
               <div class="setting-control">
-                <button onclick="updateEventSetting('${event.id}', 'courts', ${event.courts || 1} - 1)">−</button>
-                <span id="courtsDisplay">${event.courts || 1}</span>
-                <button onclick="updateEventSetting('${event.id}', 'courts', ${event.courts || 1} + 1)">+</button>
+                <button onclick="adjustSetting('${event.id}', 'courts', -1)">−</button>
+                <input type="number" class="setting-input" id="courtsInput" value="${event.courts || 1}" min="1" onchange="saveSetting('${event.id}', 'courts', this.value)">
+                <button onclick="adjustSetting('${event.id}', 'courts', 1)">+</button>
               </div>
             </div>
           </div>
@@ -1977,6 +2034,119 @@
       } catch (error) {
         showToast('Failed to join event: ' + error.message, 'error');
       }
+    }
+
+    async function updateEventSetting(eventId, field, value) {
+      if (value < 1) return; // min 1
+      try {
+        const body = field === 'maxPlayers' 
+          ? { maxPlayers: value } 
+          : { courts: value };
+        const updated = await apiFetch(`/events/${eventId}`, { 
+          method: 'PATCH',
+          body: JSON.stringify(body)
+        });
+        showToast('Updated!', 'success');
+        // Refresh modal with new values
+        openEventDetail(eventId);
+      } catch(e) {
+        showToast('Failed to update', 'error');
+      }
+    }
+
+    function adjustSetting(eventId, field, delta) {
+      const inputId = field === 'maxPlayers' ? 'maxPlayersInput' : 'courtsInput';
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const newVal = Math.max(1, (parseInt(input.value) || 1) + delta);
+      input.value = newVal;
+      saveSetting(eventId, field, newVal);
+    }
+
+    async function saveSetting(eventId, field, rawValue) {
+      const newVal = Math.max(1, parseInt(rawValue) || 1);
+      try {
+        const body = field === 'maxPlayers' ? { maxPlayers: newVal } : { courts: newVal };
+        await apiFetch(`/events/${eventId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(body)
+        });
+        showToast('Updated ✓', 'success');
+        await render();
+      } catch(e) {
+        showToast('Failed to update', 'error');
+      }
+    }
+
+    // ==================== MAP FUNCTIONS ====================
+    let _createMap = null;
+    let _createMarker = null;
+    let _geoTimeout = null;
+
+    function initCreateMap() {
+      const container = document.getElementById('createMapContainer');
+      if (!container) return;
+      container.style.display = 'block';
+      if (_createMap) { _createMap.invalidateSize(); return; }
+      _createMap = L.map('createMapEl').setView([1.3521, 103.8198], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
+      }).addTo(_createMap);
+      _createMap.on('click', function(e) {
+        placeMarker(e.latlng.lat, e.latlng.lng);
+        reverseGeocode(e.latlng.lat, e.latlng.lng);
+      });
+      setTimeout(() => _createMap.invalidateSize(), 200);
+    }
+
+    function placeMarker(lat, lng) {
+      if (_createMarker) _createMap.removeLayer(_createMarker);
+      _createMarker = L.marker([lat, lng]).addTo(_createMap);
+      _createMap.setView([lat, lng], 15);
+    }
+
+    function onLocationInput(value) {
+      initCreateMap();
+      clearTimeout(_geoTimeout);
+      if (value.length < 3) return;
+      _geoTimeout = setTimeout(() => geocodeAddress(value), 500);
+    }
+
+    async function geocodeAddress(address) {
+      try {
+        const q = encodeURIComponent(address + ' Singapore');
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`);
+        const d = await r.json();
+        if (d.length > 0) {
+          placeMarker(parseFloat(d[0].lat), parseFloat(d[0].lon));
+          document.getElementById('eventLocation')._lat = parseFloat(d[0].lat);
+          document.getElementById('eventLocation')._lng = parseFloat(d[0].lon);
+        }
+      } catch(e) {}
+    }
+
+    async function reverseGeocode(lat, lng) {
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const d = await r.json();
+        if (d) {
+          const parts = [d.name, d.address?.road, d.address?.suburb].filter(Boolean);
+          const shortAddr = parts.slice(0, 2).join(', ');
+          document.getElementById('eventLocation').value = shortAddr || d.display_name.split(',')[0];
+          document.getElementById('eventLocation')._lat = lat;
+          document.getElementById('eventLocation')._lng = lng;
+        }
+      } catch(e) {}
+    }
+
+    function openInMap(location, lat, lng) {
+      let url;
+      if (lat && lng && lat !== 'null' && lng !== 'null') {
+        url = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+      } else {
+        url = `https://www.openstreetmap.org/search?query=${encodeURIComponent(location + ' Singapore')}`;
+      }
+      window.open(url, '_blank');
     }
 
     async function removeParticipantPublic(participantId, eventId) {
