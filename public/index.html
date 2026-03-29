@@ -1570,16 +1570,16 @@
             </div>
             <div class="mixer-controls">
               <div class="mixer-ctrl-group">
-                <span class="mixer-ctrl-label">ROUNDS</span>
+                <span class="mixer-ctrl-label" title="Min rounds so all players play at least once">ROUNDS (AUTO)</span>
                 <button class="mixer-adj-btn" onclick="adjMixerNum('mixerRoundsInput',-1)">−</button>
                 <input type="number" class="mixer-num-input" id="mixerRoundsInput" value="4" min="1" max="20">
                 <button class="mixer-adj-btn" onclick="adjMixerNum('mixerRoundsInput',1)">+</button>
               </div>
               <div class="mixer-ctrl-group">
                 <span class="mixer-ctrl-label">COURTS</span>
-                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerCourtsInput',-1)">−</button>
-                <input type="number" class="mixer-num-input" id="mixerCourtsInput" value="1" min="1" max="10">
-                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerCourtsInput',1)">+</button>
+                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerCourtsInput',-1);updateAutoRounds()">−</button>
+                <input type="number" class="mixer-num-input" id="mixerCourtsInput" value="1" min="1" max="10" oninput="updateAutoRounds()">
+                <button class="mixer-adj-btn" onclick="adjMixerNum('mixerCourtsInput',1);updateAutoRounds()">+</button>
               </div>
               <button class="btn btn-primary" style="padding:0.5rem 1.2rem;" onclick="generateMixer()">🎲 GENERATE</button>
             </div>
@@ -1724,6 +1724,7 @@
         <div class="mixer-player-chip"><span style="color:var(--text-muted)">👤</span>
           <input value="${name}" onchange="mxRenamePlayer(${i},this.value)" title="Edit name">
         </div>`).join('') : '<span style="color:var(--text-muted);font-size:0.85rem;">No confirmed players yet</span>';
+      updateAutoRounds();
     }
 
     async function mxRenamePlayer(i, val) {
@@ -1733,12 +1734,27 @@
 
     function onMixerEventChange(id) { mxState.eventId=id||null; mxState.mixerId=null; renderMixerView(); }
 
+    function calcMinRounds(numPlayers, courts, format) {
+      if (numPlayers < 2) return 1;
+      // Full round robin: N-1 rounds ensures every player combination is covered
+      const n = numPlayers % 2 === 0 ? numPlayers : numPlayers + 1;
+      return Math.max(1, n - 1);
+    }
+    function updateAutoRounds() {
+      const players = mxState.players.filter(Boolean);
+      const courts = parseInt(document.getElementById('mixerCourtsInput')?.value) || 1;
+      const minR = calcMinRounds(players.length, courts, mxState.format || 'doubles');
+      const el = document.getElementById('mixerRoundsInput');
+      if (el) el.value = minR;
+    }
+
     function adjMixerNum(inputId, delta) { const el=document.getElementById(inputId); el.value=Math.max(1,(parseInt(el.value)||1)+delta); }
 
     function setMixerFormat(fmt) {
       mxState.format = fmt;
       document.getElementById('fmtDoubles').classList.toggle('active', fmt === 'doubles');
       document.getElementById('fmtSingles').classList.toggle('active', fmt === 'singles');
+      updateAutoRounds();
     }
 
     async function generateMixer() {
