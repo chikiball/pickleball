@@ -1737,9 +1737,12 @@
     function calcMinRounds(numPlayers, courts, format) {
       if (numPlayers < 2) return 1;
       const totalPairs = numPlayers * (numPlayers - 1) / 2;
-      const pairsPerGame = format === 'singles' ? 1 : 4;
-      const minGames = Math.ceil(totalPairs / pairsPerGame);
-      return Math.max(1, Math.ceil(minGames / courts));
+      if (format === 'singles') {
+        return Math.max(1, Math.ceil(totalPairs / courts));
+      }
+      // Doubles: need all partner pairs covered (2 per game)
+      const totalGames = Math.ceil(totalPairs / 2);
+      return Math.max(1, Math.ceil(totalGames / courts));
     }
     function updateAutoRounds() {
       const players = mxState.players.filter(Boolean);
@@ -1783,75 +1786,107 @@
     function buildRRDoubles(players, courts) {
       const N = players.length;
       if (N < 4) return [];
-      const uncovered = new Set();
+      const mkKey = (a,b) => Math.min(a,b)+','+Math.max(a,b);
+      const allPairs = new Set();
+      for (let i = 0; i < N; i++) for (let j = i+1; j < N; j++) allPairs.add(mkKey(i,j));
+      const uncovP = new Set(allPairs);  // partner pairs
+      const uncovO = new Set(allPairs);  // opponent pairs
+      const gameList = [], pc = new Array(N).fill(0);
+      while (uncovP.size > 0 && gameList.length < 500) {
+        let bG=null, bS=null, bSc=-1, bBal=999;
+        for (let a=0; a<N; a++) for (let b=a+1; b<N; b++) for (let c=b+1; c<N; c++) for (let d=c+1; d<N; d++) {
+          const g=[a,b,c,d];
+          const sp=[[[g[0],g[1]],[g[2],g[3]]],[[g[0],g[2]],[g[1],g[3]]],[[g[0],g[3]],[g[1],g[2]]]];
+          for (const [t1,t2] of sp) {
+            let ps=0;
+            if (uncovP.has(mkKey(t1[0],t1[1]))) ps++;
+            if (uncovP.has(mkKey(t2[0],t2[1]))) ps++;
+            let os=0;
+            for (const x of t1) for (const y of t2) if (uncovO.has(mkKey(x,y))) os++;
+            const sc = ps*1000 + os*10;
+            const bal = Math.max(...g.map(p=>pc[p]));
+            if (sc > bSc || (sc===bSc && bal < bBal)) { bSc=sc; bG=g; bS=[t1,t2]; bBal=bal; }
+          }
+        }
+        if (!bG) break;
+        const [t1,t2] = bS;
+        gameList.push({t1,t2});
+        uncovP.delete(mkKey(t1[0],t1[1]));
+        uncovP.delete(mkKey(t2[0],t2[1]));
+        for (const x of t1) for (const y of t2) uncovO.delete(mkKey(x,y));
+        for (const p of bG) pc[p]++;
+      }
+      // Phase 2: assign to rounds
+      const games=[], remaining=gameList.map((_,i)=>i);
+      let rn=0;
+      while (remaining.length>0) {
+        rn++; const used=new Set(); let ct=0; const rm=[];
+        for (const idx of remaining) {
+          if (ct>=courts) break;
+          const g=gameList[idx]; const pls=new Set([...g.t1,...g.t2]);
+          let conflict=false; for (const p of pls) if (used.has(p)){conflict=true;break;}
+          if (conflict) continue;
+          ct++; for (const p of pls) used.add(p);
+          games.push({round:rn,court:ct,t1p1:players[g.t1[0]],t1p2:players[g.t1[1]],t2p1:players[g.t2[0]],t2p2:players[g.t2[1]]});
+          rm.push(idx);
+        }
+        for (const idx of rm) remaining.splice(remaining.indexOf(idx),1);
+      }
+      return games;
       for (let i = 0; i < N; i++)
         for (let j = i + 1; j < N; j++)
           uncovered.add(i + ',' + j);
-      const games = [], pc = new Array(N).fill(0);
-      let rn = 0;
-      while (uncovered.size > 0 && rn < 200) {
-        rn++;
-        const used = new Set();
-        let added = false;
-        for (let ct = 0; ct < courts; ct++) {
-          const av = [];
-          for (let i = 0; i < N; i++) if (!used.has(i)) av.push(i);
-          if (av.length < 4) break;
-          let bG = null, bS = null, bSc = -1, bBal = Infinity;
-          // Try all groups of 4
-          for (let a = 0; a < av.length; a++)
-            for (let b = a+1; b < av.length; b++)
-              for (let c = b+1; c < av.length; c++)
-                for (let d = c+1; d < av.length; d++) {
-                  const g = [av[a],av[b],av[c],av[d]];
-                  const sp = [[[g[0],g[1]],[g[2],g[3]]],[[g[0],g[2]],[g[1],g[3]]],[[g[0],g[3]],[g[1],g[2]]]];
-                  for (const [t1,t2] of sp) {
-                    let sc = 0;
-                    for (const p1 of t1) for (const p2 of t2) {
-                      if (uncovered.has(Math.min(p1,p2)+','+Math.max(p1,p2))) sc++;
-                    }
-                    const bal = Math.max(...g.map(p => pc[p]));
-                    if (sc > bSc || (sc === bSc && bal < bBal)) {
-                      bSc = sc; bG = g; bS = [t1,t2]; bBal = bal;
-                    }
+      // Phase 1: Generate exactly totalGames games (no round/court yet)
+      const gameList = [], pc = new Array(N).fill(0);
+      while (gameList.length < totalGames) {
+        const av = [];
+        for (let i = 0; i < N; i++) if (pc[i] < target) av.push(i);
+        if (av.length < 4) break;
+        let bG = null, bS = null, bSc = -1, bBal = 999;
+        for (let a = 0; a < av.length; a++)
+          for (let b = a+1; b < av.length; b++)
+            for (let c = b+1; c < av.length; c++)
+              for (let d = c+1; d < av.length; d++) {
+                const g = [av[a],av[b],av[c],av[d]];
+                const sp = [[[g[0],g[1]],[g[2],g[3]]],[[g[0],g[2]],[g[1],g[3]]],[[g[0],g[3]],[g[1],g[2]]]];
+                for (const [t1,t2] of sp) {
+                  let sc = 0;
+                  for (const p1 of t1) for (const p2 of t2)
+                    if (uncovered.has(Math.min(p1,p2)+','+Math.max(p1,p2))) sc++;
+                  const bal = Math.max(...g.map(p => pc[p]));
+                  if (sc > bSc || (sc === bSc && bal < bBal)) {
+                    bSc = sc; bG = g; bS = [t1,t2]; bBal = bal;
                   }
                 }
-          if (!bG || bSc <= 0) {
-            // Fallback: find any group covering 1+ uncovered pair
-            let found = false;
-            for (const pk of uncovered) {
-              const [i,j] = pk.split(',').map(Number);
-              if (used.has(i) || used.has(j)) continue;
-              const ot = [];
-              for (let k = 0; k < N; k++) if (!used.has(k) && k !== i && k !== j) ot.push(k);
-              if (ot.length < 2) continue;
-              ot.sort((a,b) => pc[a] - pc[b]);
-              const g = [i,j,ot[0],ot[1]];
-              const sp = [[[g[0],g[1]],[g[2],g[3]]],[[g[0],g[2]],[g[1],g[3]]],[[g[0],g[3]],[g[1],g[2]]]];
-              let bs2 = null, bsc2 = 0;
-              for (const [t1,t2] of sp) {
-                let sc = 0;
-                for (const p1 of t1) for (const p2 of t2) {
-                  if (uncovered.has(Math.min(p1,p2)+','+Math.max(p1,p2))) sc++;
-                }
-                if (sc > bsc2) { bsc2 = sc; bs2 = [t1,t2]; }
               }
-              bG = g; bS = bs2; found = true; break;
-            }
-            if (!found) break;
-          }
-          if (bS) {
-            const [t1,t2] = bS;
-            games.push({ round: rn, court: ct+1,
-              t1p1: players[t1[0]], t1p2: players[t1[1]],
-              t2p1: players[t2[0]], t2p2: players[t2[1]] });
-            for (const p1 of t1) for (const p2 of t2)
-              uncovered.delete(Math.min(p1,p2)+','+Math.max(p1,p2));
-            for (const p of bG) { pc[p]++; used.add(p); }
-            added = true;
-          }
+        if (!bG) break;
+        const [t1,t2] = bS;
+        gameList.push({ t1, t2 });
+        for (const p1 of t1) for (const p2 of t2)
+          uncovered.delete(Math.min(p1,p2)+','+Math.max(p1,p2));
+        for (const p of bG) pc[p]++;
+      }
+      // Phase 2: Assign games to rounds (no player in 2 games per round)
+      const games = [], remaining = gameList.map((g,i) => i);
+      let rn = 0;
+      while (remaining.length > 0) {
+        rn++;
+        const used = new Set();
+        let ctNum = 0;
+        const toRemove = [];
+        for (const idx of remaining) {
+          if (ctNum >= courts) break;
+          const g = gameList[idx];
+          const pls = new Set([...g.t1, ...g.t2]);
+          let conflict = false;
+          for (const p of pls) if (used.has(p)) { conflict = true; break; }
+          if (conflict) continue;
+          ctNum++;
+          for (const p of pls) used.add(p);
+          games.push({ round: rn, court: ctNum, t1p1: players[g.t1[0]], t1p2: players[g.t1[1]], t2p1: players[g.t2[0]], t2p2: players[g.t2[1]] });
+          toRemove.push(idx);
         }
-        if (!added) break;
+        for (const idx of toRemove) remaining.splice(remaining.indexOf(idx), 1);
       }
       return games;
     }
