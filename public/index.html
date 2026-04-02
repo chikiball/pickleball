@@ -1570,7 +1570,7 @@
             </div>
             <div class="mixer-controls">
               <div class="mixer-ctrl-group">
-                <span class="mixer-ctrl-label" title="Min rounds so all players play at least once">ROUNDS (AUTO)</span>
+                <span class="mixer-ctrl-label" title="Est. rounds for all opponent pairs to be covered">ROUNDS (EST)</span>
                 <button class="mixer-adj-btn" onclick="adjMixerNum('mixerRoundsInput',-1)">−</button>
                 <input type="number" class="mixer-num-input" id="mixerRoundsInput" value="4" min="1" max="20">
                 <button class="mixer-adj-btn" onclick="adjMixerNum('mixerRoundsInput',1)">+</button>
@@ -1736,9 +1736,10 @@
 
     function calcMinRounds(numPlayers, courts, format) {
       if (numPlayers < 2) return 1;
-      // Full round robin: N-1 rounds ensures every player combination is covered
-      const n = numPlayers % 2 === 0 ? numPlayers : numPlayers + 1;
-      return Math.max(1, n - 1);
+      const totalPairs = numPlayers * (numPlayers - 1) / 2;
+      const pairsPerGame = format === 'singles' ? 1 : 4;
+      const minGames = Math.ceil(totalPairs / pairsPerGame);
+      return Math.max(1, Math.ceil(minGames / courts));
     }
     function updateAutoRounds() {
       const players = mxState.players.filter(Boolean);
@@ -1775,43 +1776,124 @@
 
     function buildRoundRobin(players, courts, numRounds, format) {
       return format === 'singles'
-        ? buildRRSingles(players, courts, numRounds)
-        : buildRRDoubles(players, courts, numRounds);
+        ? buildRRSingles(players, courts)
+        : buildRRDoubles(players, courts);
     }
 
-    function buildRRSingles(players, courts, numRounds) {
-      const list = players.length % 2 !== 0 ? [...players, 'BYE'] : [...players];
-      const N = list.length, half = N / 2;
-      const fixed = list[0], rotating = list.slice(1);
-      const games = [], max = Math.min(numRounds, N - 1);
-      for (let r = 0; r < max; r++) {
-        const cur = [fixed, ...rotating];
-        for (let c = 0; c < courts && c < half; c++) {
-          const p1 = cur[c], p2 = cur[c + half];
-          if (p1 === 'BYE' || p2 === 'BYE') continue;
-          games.push({ round: r + 1, court: c + 1, t1p1: p1, t1p2: '', t2p1: p2, t2p2: '' });
+    function buildRRDoubles(players, courts) {
+      const N = players.length;
+      if (N < 4) return [];
+      const uncovered = new Set();
+      for (let i = 0; i < N; i++)
+        for (let j = i + 1; j < N; j++)
+          uncovered.add(i + ',' + j);
+      const games = [], pc = new Array(N).fill(0);
+      let rn = 0;
+      while (uncovered.size > 0 && rn < 200) {
+        rn++;
+        const used = new Set();
+        let added = false;
+        for (let ct = 0; ct < courts; ct++) {
+          const av = [];
+          for (let i = 0; i < N; i++) if (!used.has(i)) av.push(i);
+          if (av.length < 4) break;
+          let bG = null, bS = null, bSc = -1, bBal = Infinity;
+          // Try all groups of 4
+          for (let a = 0; a < av.length; a++)
+            for (let b = a+1; b < av.length; b++)
+              for (let c = b+1; c < av.length; c++)
+                for (let d = c+1; d < av.length; d++) {
+                  const g = [av[a],av[b],av[c],av[d]];
+                  const sp = [[[g[0],g[1]],[g[2],g[3]]],[[g[0],g[2]],[g[1],g[3]]],[[g[0],g[3]],[g[1],g[2]]]];
+                  for (const [t1,t2] of sp) {
+                    let sc = 0;
+                    for (const p1 of t1) for (const p2 of t2) {
+                      if (uncovered.has(Math.min(p1,p2)+','+Math.max(p1,p2))) sc++;
+                    }
+                    const bal = Math.max(...g.map(p => pc[p]));
+                    if (sc > bSc || (sc === bSc && bal < bBal)) {
+                      bSc = sc; bG = g; bS = [t1,t2]; bBal = bal;
+                    }
+                  }
+                }
+          if (!bG || bSc <= 0) {
+            // Fallback: find any group covering 1+ uncovered pair
+            let found = false;
+            for (const pk of uncovered) {
+              const [i,j] = pk.split(',').map(Number);
+              if (used.has(i) || used.has(j)) continue;
+              const ot = [];
+              for (let k = 0; k < N; k++) if (!used.has(k) && k !== i && k !== j) ot.push(k);
+              if (ot.length < 2) continue;
+              ot.sort((a,b) => pc[a] - pc[b]);
+              const g = [i,j,ot[0],ot[1]];
+              const sp = [[[g[0],g[1]],[g[2],g[3]]],[[g[0],g[2]],[g[1],g[3]]],[[g[0],g[3]],[g[1],g[2]]]];
+              let bs2 = null, bsc2 = 0;
+              for (const [t1,t2] of sp) {
+                let sc = 0;
+                for (const p1 of t1) for (const p2 of t2) {
+                  if (uncovered.has(Math.min(p1,p2)+','+Math.max(p1,p2))) sc++;
+                }
+                if (sc > bsc2) { bsc2 = sc; bs2 = [t1,t2]; }
+              }
+              bG = g; bS = bs2; found = true; break;
+            }
+            if (!found) break;
+          }
+          if (bS) {
+            const [t1,t2] = bS;
+            games.push({ round: rn, court: ct+1,
+              t1p1: players[t1[0]], t1p2: players[t1[1]],
+              t2p1: players[t2[0]], t2p2: players[t2[1]] });
+            for (const p1 of t1) for (const p2 of t2)
+              uncovered.delete(Math.min(p1,p2)+','+Math.max(p1,p2));
+            for (const p of bG) { pc[p]++; used.add(p); }
+            added = true;
+          }
         }
-        rotating.unshift(rotating.pop());
+        if (!added) break;
       }
       return games;
     }
 
-    function buildRRDoubles(players, courts, numRounds) {
-      const list = players.length % 2 !== 0 ? [...players, 'BYE'] : [...players];
-      const N = list.length, half = N / 2;
-      const fixed = list[0], rotating = list.slice(1);
-      const games = [], max = Math.min(numRounds, N - 1);
-      for (let r = 0; r < max; r++) {
-        const cur = [fixed, ...rotating];
-        for (let c = 0; c < courts; c++) {
-          const i = c * 2; if (i + 1 >= half) break;
-          const t1p1 = cur[i], t1p2 = cur[i + half], t2p1 = cur[i + 1], t2p2 = cur[i + 1 + half];
-          if (t1p1 === 'BYE' && t1p2 === 'BYE') continue;
-          games.push({ round: r + 1, court: c + 1,
-            t1p1: t1p1 === 'BYE' ? '' : t1p1, t1p2: t1p2 === 'BYE' ? '' : t1p2,
-            t2p1: t2p1 === 'BYE' ? '' : t2p1, t2p2: t2p2 === 'BYE' ? '' : t2p2 });
+    function buildRRSingles(players, courts) {
+      const N = players.length;
+      if (N < 2) return [];
+      const uncovered = new Set();
+      for (let i = 0; i < N; i++)
+        for (let j = i + 1; j < N; j++)
+          uncovered.add(i + ',' + j);
+      const games = [], pc = new Array(N).fill(0);
+      let rn = 0;
+      while (uncovered.size > 0 && rn < 300) {
+        rn++;
+        const used = new Set();
+        let added = false;
+        for (let ct = 0; ct < courts; ct++) {
+          const av = [];
+          for (let i = 0; i < N; i++) if (!used.has(i)) av.push(i);
+          if (av.length < 2) break;
+          let bP = null, bSc = -1, bBal = Infinity;
+          for (let a = 0; a < av.length; a++)
+            for (let b = a + 1; b < av.length; b++) {
+              const key = av[a] + ',' + av[b];
+              const sc = uncovered.has(key) ? 1 : 0;
+              const bal = Math.max(pc[av[a]], pc[av[b]]);
+              if (sc > bSc || (sc === bSc && bal < bBal)) {
+                bSc = sc; bP = [av[a], av[b]]; bBal = bal;
+              }
+            }
+          if (bP && bSc > 0) {
+            const [p1, p2] = bP;
+            games.push({ round: rn, court: ct+1,
+              t1p1: players[p1], t1p2: '', t2p1: players[p2], t2p2: '' });
+            uncovered.delete(Math.min(p1,p2)+','+Math.max(p1,p2));
+            pc[p1]++; pc[p2]++;
+            used.add(p1); used.add(p2);
+            added = true;
+          }
         }
-        rotating.unshift(rotating.pop());
+        if (!added) break;
       }
       return games;
     }
