@@ -2108,6 +2108,7 @@
             <div class="badges-row">${badgesHtml}</div>
             ${joinBtnHtml}
           `;
+          container.onclick = () => openEventDetail(nextEvent.id);
         }
 
         // Update stats
