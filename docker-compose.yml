@@ -1,0 +1,42 @@
+# Home server deployment — joins shared server-net (Nginx + Cloudflare Tunnel)
+# URL: https://pickle.nandharu.uk
+
+services:
+  pickleball:
+    build: .
+    container_name: pickleball
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/pickleball.db
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-pickle2024}
+      - SESSION_SECRET=${SESSION_SECRET:-pickle-session-secret-change-me}
+    volumes:
+      - pickleball-data:/data
+    networks:
+      - server-net
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/stats"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pickleball-data:
+
+networks:
+  server-net:
+    external: true
